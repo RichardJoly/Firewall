@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+
+##
+## EPITECH PROJECT, 2020
+## Firewall
+## File description:
+## Firewall
+##
+
+import socket
+import struct
+import os,sys
+
+def firewall(filename):
+    s=socket.socket(socket.PF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
+    fd = open(filename, 'a')
+
+    while KeyboardInterrupt:
+        try:
+            raw, addr = s.recvfrom(65565)
+            dest_mac, src_mac, eth_proto, data = ethernet_frame(raw)
+
+            if eth_proto == 8:
+                (version, header_len, ttl, proto, src, dest, data) = ipv4_packet(data)
+                print("\n\nsrc:{} dest:{}\n data:{}\n".format(src, dest, data))
+                fd.write("\n\nsrc:{} dest:{}\n data:{}\n".format(src, dest, data))
+        except KeyboardInterrupt:
+            break
+    fd.close()
+    s.close()
+    print("Thanks\nQuitting")
+
+def ethernet_frame(data):
+    dest_mac, src_mac, proto = struct.unpack('! 6s 6s H', data[:14])
+    return get_mac(dest_mac), get_mac(src_mac), socket.htons(proto), data[14:]
+
+def get_mac(byte_addr):
+    byte_str = map('{:02x}'.format, byte_addr)
+    return ':'.join(byte_str).upper()
+
+def ipv4_packet(data):
+    version_header_len = data[0]
+    version = version_header_len >> 4
+    header_len = (version_header_len & 15) * 4
+    ttl , proto, src, dest = struct.unpack('! 8x B B 2x 4s 4s', data[:20])
+    return version, header_len, ttl, proto, ipv4(src), ipv4(dest), data[header_len:]
+
+def ipv4(addr):
+    return '.'.join(map(str, addr))
+
+def main():
+    if (len(sys.argv) == 2):
+        firewall(sys.argv[1])
+        return (0)
+    else:
+        print("Usage:\n\t./firewall filename")
+
+if __name__ == "__main__":
+    main()
